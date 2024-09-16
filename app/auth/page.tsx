@@ -80,7 +80,7 @@ const AuthPage: React.FC = () => {
     };
 
     fetchUser();
-  }, []);
+  }, [supabase]);
 
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -214,8 +214,7 @@ const AuthPage: React.FC = () => {
 
   const handleOTP = async (data: z.infer<typeof otpSchema>) => {
     setIsLoading(true);
-    // Here you would typically verify the OTP with your backend
-    // For demonstration, we'll just show a success message
+    console.log(data);
     setIsLoading(false);
     toast.success("OTP verified successfully");
   };
@@ -237,7 +236,16 @@ const AuthPage: React.FC = () => {
         <CardContent>
           <Tabs
             value={authMode}
-            onValueChange={(value) => setAuthMode(value as any)}
+            onValueChange={(value) =>
+              setAuthMode(
+                value as
+                  | "otp"
+                  | "login"
+                  | "register"
+                  | "resetPassword"
+                  | "magicLink"
+              )
+            }
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>

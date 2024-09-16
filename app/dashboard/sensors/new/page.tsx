@@ -2,7 +2,6 @@
 
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,6 @@ export default function NewSensor() {
   const [name, setName] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [password, setPassword] = useState("");
-  const router = useRouter();
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
   const [message, setMessage] = useState("");

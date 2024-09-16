@@ -23,7 +23,7 @@ export default function NewGroup() {
     };
 
     fetchUser();
-  }, []);
+  }, [supabase]);
 
   if (!user) {
     return (
@@ -40,7 +40,7 @@ export default function NewGroup() {
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("sensor_blocks")
       .insert({ name, user_id: user?.id });
 

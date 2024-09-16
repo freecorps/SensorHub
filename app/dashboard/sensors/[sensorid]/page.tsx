@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/router";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -21,7 +20,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -36,7 +34,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { useSearchParams } from "next/navigation";
 
 const sensorSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -64,6 +61,7 @@ export default function SensorInfo({ params }: SensorInfoProps) {
   const [sensor, setSensor] = useState<SensorData | null>(null);
   const [readings, setReadings] = useState<SensorReading[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
   const supabase = createClient();
 
   const form = useForm<SensorData>({
@@ -180,7 +178,7 @@ export default function SensorInfo({ params }: SensorInfoProps) {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
                       <FormLabel className="text-base">Public Sensor</FormLabel>
-                      <h2>Make this sensor's data publicly accessible</h2>
+                      <h2>{"Make this sensor's data publicly accessible"}</h2>
                     </div>
                     <FormControl>
                       <Switch

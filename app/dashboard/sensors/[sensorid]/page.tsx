@@ -54,10 +54,6 @@ interface SensorInfoProps {
 }
 
 export default function SensorInfo({ params }: SensorInfoProps) {
-  if (!params.sensorid) {
-    return <div>Sensor not found</div>;
-  }
-
   const [sensor, setSensor] = useState<SensorData | null>(null);
   const [readings, setReadings] = useState<SensorReading[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,6 +80,7 @@ export default function SensorInfo({ params }: SensorInfoProps) {
 
         if (sensorError) {
           toast.error("Failed to fetch sensor information");
+          setIsLoading(false);
           return;
         }
 
@@ -117,7 +114,7 @@ export default function SensorInfo({ params }: SensorInfoProps) {
     };
 
     fetchSensorData();
-  }, [form]);
+  }, [params.sensorid, form]);
 
   const onSubmit = async (data: SensorData) => {
     setIsLoading(true);

@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { User } from "@supabase/supabase-js";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function NewSensor() {
   const [name, setName] = useState("");
@@ -38,7 +39,8 @@ export default function NewSensor() {
         transition={{ duration: 0.5 }}
         className="container mx-auto p-6"
       >
-        <h1 className="text-3xl font-bold mb-6">Carregando...</h1>
+        <Spinner size={70} className="text-accent" />
+        <h1 className="text-3xl font-bold mb-6">Loading....</h1>
       </motion.div>
     );
   }

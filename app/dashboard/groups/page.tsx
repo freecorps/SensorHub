@@ -28,10 +28,10 @@ export default function Groups() {
       transition={{ duration: 0.5 }}
       className="container mx-auto p-6"
     >
-      <h1 className="text-3xl font-bold mb-6">Grupos</h1>
+      <h1 className="text-3xl font-bold mb-6">Groups</h1>
 
       <Link href="/dashboard/groups/new">
-        <Button className="mb-6">Criar Novo Grupo</Button>
+        <Button className="mb-6">Create New Group</Button>
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -42,7 +42,7 @@ export default function Groups() {
             </CardHeader>
             <CardContent>
               <Link href={`/dashboard/groups/${group.id}`}>
-                <Button className="mt-4">Ver Detalhes</Button>
+                <Button className="mt-4">See Details</Button>
               </Link>
             </CardContent>
           </Card>

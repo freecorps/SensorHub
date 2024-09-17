@@ -34,6 +34,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 const sensorSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -133,11 +134,20 @@ export default function SensorInfo({ params }: SensorInfoProps) {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <Spinner size={70} className="text-accent" />
+        <h1>Loading</h1>
+      </div>
+    );
   }
 
   if (!sensor) {
-    return <div>Sensor not found</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1>Sensor not found</h1>
+      </div>
+    );
   }
 
   return (

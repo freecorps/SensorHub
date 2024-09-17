@@ -11,8 +11,14 @@ import {
 } from "@/components/ui/card";
 import { ArrowRight, Share2, Shield, Activity } from "lucide-react";
 import { ThemeSwitch } from "@/components/theme-switch";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+  const redirect = (path: string) => {
+    router.push(path);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
       <nav className="container mx-auto p-6">
@@ -27,8 +33,21 @@ export default function Home() {
           </motion.h1>
           <div className="space-x-4 flex items-center">
             <ThemeSwitch />
-            <Button variant="ghost">Login</Button>
-            <Button>Sign Up</Button>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                redirect("./auth");
+              }}
+            >
+              Login
+            </Button>
+            <Button
+              onClick={() => {
+                redirect("./auth");
+              }}
+            >
+              Sign Up
+            </Button>
           </div>
         </div>
       </nav>
@@ -41,15 +60,18 @@ export default function Home() {
           className="text-center mb-12"
         >
           <h2 className="text-4xl font-bold text-foreground mb-4">
-            Crie, Gerencie e Compartilhe seus Sensores
+            Create, Manage and Share your Sensors
           </h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Plataforma intuitiva para monitoramento e compartilhamento de dados
-            de sensores
+            Intuitive platform for monitoring and sharing sensor data
           </p>
           <div className="flex justify-center space-x-4">
-            <Button>
-              Comece Agora <ArrowRight className="ml-2" />
+            <Button
+              onClick={() => {
+                redirect("./auth");
+              }}
+            >
+              Start Now <ArrowRight className="ml-2" />
             </Button>
           </div>
         </motion.div>
@@ -58,19 +80,18 @@ export default function Home() {
           {[
             {
               icon: Shield,
-              title: "Seguro",
-              description: "Proteja seus dados com nossa segurança avançada",
+              title: "Secure",
+              description: "Protect your data with our advanced security",
             },
             {
               icon: Share2,
-              title: "Compartilhável",
-              description:
-                "Compartilhe facilmente seus dados com quem você quiser",
+              title: "Shareable",
+              description: "Easily share your data with whoever you want",
             },
             {
               icon: Activity,
-              title: "Tempo Real",
-              description: "Monitore seus sensores em tempo real",
+              title: "Real Time",
+              description: "Monitor your sensors in real time",
             },
           ].map((feature, index) => (
             <motion.div
@@ -99,14 +120,20 @@ export default function Home() {
         >
           <Card>
             <CardHeader>
-              <CardTitle>Comece a Usar o SensorHub Hoje</CardTitle>
+              <CardTitle>Start Using SensorHub Today</CardTitle>
               <CardDescription>
-                Crie sua conta gratuitamente e comece a gerenciar seus sensores
+                Create your free account and start managing your sensors
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex space-x-4">
-                <Button>Criar Conta</Button>
+                <Button
+                  onClick={() => {
+                    redirect("./auth");
+                  }}
+                >
+                  Create Account
+                </Button>
               </div>
             </CardContent>
           </Card>

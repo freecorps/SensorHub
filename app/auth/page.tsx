@@ -32,7 +32,6 @@ import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
-import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp";
 
 // Zod schemas
 const loginSchema = z.object({
@@ -119,8 +118,8 @@ function AuthPage() {
       if (error) throw error;
       toast.success("Login successful!");
       router.push("/dashboard");
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      toast.error((error as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -135,8 +134,8 @@ function AuthPage() {
       if (error) throw error;
       toast.success("Password reset email sent!");
       setFormType("login");
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      toast.error((error as Error).message);
     } finally {
       setIsLoading(false);
     }

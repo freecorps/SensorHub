@@ -150,8 +150,8 @@ function AuthPage() {
       if (error) throw error;
       toast.success("Password updated successfully!");
       setFormType("login");
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      toast.error((error as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -167,8 +167,8 @@ function AuthPage() {
       toast.success("OTP sent to your email");
       setOtpEmail(data.email);
       setFormType("otpVerification");
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      toast.error((error as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -185,8 +185,8 @@ function AuthPage() {
       if (error) throw error;
       toast.success("Login successful!");
       router.push("/dashboard");
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      toast.error((error as Error).message);
     } finally {
       setIsLoading(false);
     }

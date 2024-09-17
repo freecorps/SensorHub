@@ -29,10 +29,10 @@ export default function Sensors() {
       transition={{ duration: 0.5 }}
       className="container mx-auto p-6"
     >
-      <h1 className="text-3xl font-bold mb-6">Sensores</h1>
+      <h1 className="text-3xl font-bold mb-6">Sensors</h1>
 
       <Link href="/dashboard/sensors/new">
-        <Button className="mb-6">Criar Novo Sensor</Button>
+        <Button className="mb-6">Create New Sensor</Button>
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -44,7 +44,7 @@ export default function Sensors() {
             <CardContent>
               <p>Status: {sensor.is_public ? "Público" : "Privado"}</p>
               <Link href={`/dashboard/sensors/${sensor.id}`}>
-                <Button className="mt-4">Ver Detalhes</Button>
+                <Button className="mt-4">See Details</Button>
               </Link>
             </CardContent>
           </Card>

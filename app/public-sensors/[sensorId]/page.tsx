@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 interface SensorReading {
   timestamp: string;
@@ -89,11 +90,20 @@ export default function PublicSensor() {
   }, [sensorId]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <Spinner size={70} className="text-accent" />
+        <h1>Loading</h1>
+      </div>
+    );
   }
 
   if (!sensor || !sensor.is_public) {
-    return <div>Sensor not found or not public</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1>Failed to fetch sensor data</h1>
+      </div>
+    );
   }
 
   return (

@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { User } from "@supabase/supabase-js";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function NewGroup() {
   const [name, setName] = useState("");
@@ -33,7 +34,8 @@ export default function NewGroup() {
         transition={{ duration: 0.5 }}
         className="container mx-auto p-6"
       >
-        <h1 className="text-3xl font-bold mb-6">Carregando...</h1>
+        <Spinner size={70} className="text-accent" />
+        <h1 className="text-3xl font-bold mb-6">Loading...</h1>
       </motion.div>
     );
   }
@@ -56,11 +58,11 @@ export default function NewGroup() {
       transition={{ duration: 0.5 }}
       className="container mx-auto p-6"
     >
-      <h1 className="text-3xl font-bold mb-6">Criar Novo Grupo</h1>
+      <h1 className="text-3xl font-bold mb-6">Create New Group</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle>Detalhes do Grupo</CardTitle>
+          <CardTitle>Group details</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,7 +72,7 @@ export default function NewGroup() {
               onChange={(e) => setName(e.target.value)}
               required
             />
-            <Button type="submit">Criar Grupo</Button>
+            <Button type="submit">Create Group</Button>
           </form>
         </CardContent>
       </Card>

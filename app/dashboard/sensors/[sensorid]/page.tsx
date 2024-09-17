@@ -34,13 +34,25 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const sensorSchema = z.object({
   name: z.string().min(1, "Name is required"),
   is_public: z.boolean(),
 });
 
-type SensorData = z.infer<typeof sensorSchema>;
+type SensorData = z.infer<typeof sensorSchema> & { api_key?: string };
 
 interface SensorReading {
   timestamp: string;
@@ -57,6 +69,8 @@ export default function SensorInfo({ params }: SensorInfoProps) {
   const [sensor, setSensor] = useState<SensorData | null>(null);
   const [readings, setReadings] = useState<SensorReading[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isApiKeyRevealed, setIsApiKeyRevealed] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const supabase = createClient();
 
@@ -133,12 +147,34 @@ export default function SensorInfo({ params }: SensorInfoProps) {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <Spinner size={70} className="text-accent" />
+        <h1>Loading</h1>
+      </div>
+    );
   }
 
   if (!sensor) {
-    return <div>Sensor not found</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1>Sensor not found</h1>
+      </div>
+    );
   }
+
+  const handleApiKeyToggle = () => {
+    if (isApiKeyRevealed) {
+      setIsApiKeyRevealed(false);
+    } else {
+      setIsDialogOpen(true);
+    }
+  };
+
+  const handleRevealApiKey = () => {
+    setIsApiKeyRevealed(true);
+    setIsDialogOpen(false);
+  };
 
   return (
     <motion.div
@@ -152,7 +188,7 @@ export default function SensorInfo({ params }: SensorInfoProps) {
           <CardTitle>Sensor Information</CardTitle>
           <CardDescription>View and edit sensor details</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="gap-4 flex flex-col">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
@@ -191,6 +227,43 @@ export default function SensorInfo({ params }: SensorInfoProps) {
               </Button>
             </form>
           </Form>
+          <div className="flex items-center space-x-2">
+            <div
+              className={`p-2 rounded flex-grow ${
+                isApiKeyRevealed ? "" : "blur-sm select-none"
+              }`}
+            >
+              {sensor.api_key || "API Key not available"}
+            </div>
+            {isApiKeyRevealed ? (
+              <Button variant="outline" onClick={handleApiKeyToggle}>
+                Hide
+              </Button>
+            ) : (
+              <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" onClick={handleApiKeyToggle}>
+                    Reveal
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Reveal API Key</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to reveal the API key? This key
+                      should be kept secret.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleRevealApiKey}>
+                      Reveal
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
         </CardContent>
       </Card>
 

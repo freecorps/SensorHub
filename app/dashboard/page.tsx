@@ -43,24 +43,24 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <Card>
           <CardHeader>
-            <CardTitle>Sensores</CardTitle>
+            <CardTitle>Sensors</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-4xl font-bold">{sensorCount}</p>
             <Link href="/dashboard/sensors">
-              <Button className="mt-4">Gerenciar Sensores</Button>
+              <Button className="mt-4">Manage Sensors</Button>
             </Link>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Grupos</CardTitle>
+            <CardTitle>Groups</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-4xl font-bold">{groupCount}</p>
             <Link href="/dashboard/groups">
-              <Button className="mt-4">Gerenciar Grupos</Button>
+              <Button className="mt-4">Manage Groups</Button>
             </Link>
           </CardContent>
         </Card>
@@ -68,14 +68,14 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Ações Rápidas</CardTitle>
+          <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col space-y-4">
           <Link href="/dashboard/sensors/new">
-            <Button>Criar Novo Sensor</Button>
+            <Button>Create New Sensor</Button>
           </Link>
           <Link href="/dashboard/groups/new">
-            <Button>Criar Novo Grupo</Button>
+            <Button>Create New Group</Button>
           </Link>
         </CardContent>
       </Card>

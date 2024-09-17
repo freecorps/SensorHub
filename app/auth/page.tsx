@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -22,7 +22,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   InputOTP,
   InputOTPGroup,
@@ -33,25 +32,24 @@ import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp";
 
-// Zod schemas for form validation
-const emailSchema = z.object({
-  email: z.string().email("Invalid email address"),
-});
-
+// Zod schemas
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
-const registerSchema = loginSchema.extend({
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
+const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email address"),
 });
 
 const resetPasswordSchema = z
   .object({
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string(),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z
+      .string()
+      .min(8, "Password must be at least 8 characters"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -59,17 +57,29 @@ const resetPasswordSchema = z
   });
 
 const otpSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
+const otpVerificationSchema = z.object({
   otp: z.string().length(6, "OTP must be 6 digits"),
 });
 
-const AuthPage: React.FC = () => {
-  const [authMode, setAuthMode] = useState<
-    "login" | "register" | "resetPassword" | "magicLink" | "otp"
+type LoginFormData = z.infer<typeof loginSchema>;
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+type OtpFormData = z.infer<typeof otpSchema>;
+type OtpVerificationFormData = z.infer<typeof otpVerificationSchema>;
+
+function AuthPage() {
+  const [formType, setFormType] = useState<
+    "login" | "forgotPassword" | "resetPassword" | "otp" | "otpVerification"
   >("login");
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [otpEmail, setOtpEmail] = useState<string>("");
 
   const supabase = createClient();
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -80,29 +90,108 @@ const AuthPage: React.FC = () => {
     };
 
     fetchUser();
-  }, [supabase]);
+  }, []);
 
-  const loginForm = useForm<z.infer<typeof loginSchema>>({
+  const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
-  const registerForm = useForm<z.infer<typeof registerSchema>>({
-    resolver: zodResolver(registerSchema),
+  const forgotPasswordForm = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
   });
 
-  const resetPasswordForm = useForm<z.infer<typeof resetPasswordSchema>>({
+  const resetPasswordForm = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
   });
 
-  const magicLinkForm = useForm<z.infer<typeof emailSchema>>({
-    resolver: zodResolver(emailSchema),
-  });
-
-  const otpForm = useForm<z.infer<typeof otpSchema>>({
+  const otpForm = useForm<OtpFormData>({
     resolver: zodResolver(otpSchema),
   });
 
-  const router = useRouter();
+  const otpVerificationForm = useForm<OtpVerificationFormData>({
+    resolver: zodResolver(otpVerificationSchema),
+  });
+
+  const onLoginSubmit = async (data: LoginFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword(data);
+      if (error) throw error;
+      toast.success("Login successful!");
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onForgotPasswordSubmit = async (data: ForgotPasswordFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
+        redirectTo: `${window.location.origin}/auth?type=recovery`,
+      });
+      if (error) throw error;
+      toast.success("Password reset email sent!");
+      setFormType("login");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onResetPasswordSubmit = async (data: ResetPasswordFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: data.password,
+      });
+      if (error) throw error;
+      toast.success("Password updated successfully!");
+      setFormType("login");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onOtpSubmit = async (data: OtpFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: data.email,
+      });
+      if (error) throw error;
+      toast.success("OTP sent to your email");
+      setOtpEmail(data.email);
+      setFormType("otpVerification");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onOtpVerificationSubmit = async (data: OtpVerificationFormData) => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: otpEmail,
+        token: data.otp,
+        type: "email",
+      });
+      if (error) throw error;
+      toast.success("Login successful!");
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (user) {
     return (
@@ -110,40 +199,30 @@ const AuthPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className="container mx-auto p-4"
+        className="flex justify-center items-center min-h-screen"
       >
-        <Card className="w-full max-w-md mx-auto ">
+        <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-xl">
-              Welcome back, {user.email}
-            </CardTitle>
-            <CardDescription className="text-gray-400">
-              You are already signed in
-            </CardDescription>
+            <CardTitle>Welcome back, {user.email}</CardTitle>
+            <CardDescription>You are already signed in</CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-row gap-2">
+          <CardContent className="space-y-4">
             <Button
               onClick={async () => {
-                setIsLoading(true);
                 await supabase.auth.signOut();
                 setUser(null);
                 toast.success("Signed out successfully");
-                setIsLoading(false);
               }}
-              disabled={isLoading}
               variant="outline"
-              className="w-full bg-transparent"
-            >
-              {isLoading ? "Loading..." : "Sign Out"}
-            </Button>
-            <Button
-              onClick={() => {
-                router.push("/dashboard");
-              }}
-              disabled={isLoading}
               className="w-full"
             >
-              {isLoading ? "Loading..." : "Go to Dashboard"}
+              Sign Out
+            </Button>
+            <Button
+              onClick={() => router.push("/dashboard")}
+              className="w-full"
+            >
+              Go to Dashboard
             </Button>
           </CardContent>
         </Card>
@@ -151,289 +230,29 @@ const AuthPage: React.FC = () => {
     );
   }
 
-  const handleLogin = async (data: z.infer<typeof loginSchema>) => {
-    setIsLoading(true);
-    const { error } = await supabase.auth.signInWithPassword(data);
-    setIsLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Login successful, redirecting...");
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      router.push("/dashboard");
-    }
-  };
-
-  const handleRegister = async (data: z.infer<typeof registerSchema>) => {
-    setIsLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: {
-          full_name: data.fullName,
-        },
-      },
-    });
-    setIsLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success(
-        "Registration successful. Please check your email for verification."
-      );
-    }
-  };
-
-  const handleResetPassword = async (
-    data: z.infer<typeof resetPasswordSchema>
-  ) => {
-    setIsLoading(true);
-    const { error } = await supabase.auth.updateUser({
-      password: data.password,
-    });
-    setIsLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Password reset successfully");
-      setAuthMode("login");
-    }
-  };
-
-  const handleMagicLink = async (data: z.infer<typeof emailSchema>) => {
-    setIsLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({ email: data.email });
-    setIsLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Magic link sent. Please check your email.");
-    }
-  };
-
-  const handleOTP = async (data: z.infer<typeof otpSchema>) => {
-    setIsLoading(true);
-    console.log(data);
-    setIsLoading(false);
-    toast.success("OTP verified successfully");
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="container mx-auto p-4"
+      className="flex justify-center items-center min-h-screen"
     >
-      <Card className="w-full max-w-md mx-auto">
+      <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Authentication</CardTitle>
+          <CardTitle>SensorHub</CardTitle>
           <CardDescription>
             Sign in to your account or create a new one
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs
-            value={authMode}
-            onValueChange={(value) =>
-              setAuthMode(
-                value as
-                  | "otp"
-                  | "login"
-                  | "register"
-                  | "resetPassword"
-                  | "magicLink"
-              )
-            }
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
-            </TabsList>
-            <TabsContent value="login">
-              <Form {...loginForm}>
-                <form
-                  onSubmit={loginForm.handleSubmit(handleLogin)}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={loginForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="email"
-                            placeholder="Enter your email"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={loginForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="password"
-                            placeholder="Enter your password"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Loading..." : "Login"}
-                  </Button>
-                </form>
-              </Form>
-              <div className="mt-4 text-center">
-                <Button variant="link" onClick={() => setAuthMode("magicLink")}>
-                  Login with Magic Link
-                </Button>
-              </div>
-              <div className="mt-2 text-center">
-                <Button variant="link" onClick={() => setAuthMode("otp")}>
-                  Login with OTP
-                </Button>
-              </div>
-              <div className="mt-2 text-center">
-                <Button
-                  variant="link"
-                  onClick={() => setAuthMode("resetPassword")}
-                >
-                  Forgot Password?
-                </Button>
-              </div>
-            </TabsContent>
-            <TabsContent value="register">
-              <Form {...registerForm}>
-                <form
-                  onSubmit={registerForm.handleSubmit(handleRegister)}
-                  className="space-y-4"
-                >
-                  <FormField
-                    control={registerForm.control}
-                    name="fullName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Enter your full name"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={registerForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="email"
-                            placeholder="Enter your email"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={registerForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="password"
-                            placeholder="Create a password"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Loading..." : "Register"}
-                  </Button>
-                </form>
-              </Form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          {authMode === "resetPassword" && (
-            <Form {...resetPasswordForm}>
+          {formType === "login" && (
+            <Form {...loginForm}>
               <form
-                onSubmit={resetPasswordForm.handleSubmit(handleResetPassword)}
-                className="space-y-4 w-full"
+                onSubmit={loginForm.handleSubmit(onLoginSubmit)}
+                className="space-y-4"
               >
                 <FormField
-                  control={resetPasswordForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>New Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="password"
-                          placeholder="Enter new password"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={resetPasswordForm.control}
-                  name="confirmPassword"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type="password"
-                          placeholder="Confirm new password"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Loading..." : "Reset Password"}
-                </Button>
-              </form>
-            </Form>
-          )}
-          {authMode === "magicLink" && (
-            <Form {...magicLinkForm}>
-              <form
-                onSubmit={magicLinkForm.handleSubmit(handleMagicLink)}
-                className="space-y-4 w-full"
-              >
-                <FormField
-                  control={magicLinkForm.control}
+                  control={loginForm.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
@@ -449,38 +268,169 @@ const AuthPage: React.FC = () => {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={loginForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="password"
+                          placeholder="Enter your password"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Loading..." : "Send Magic Link"}
+                  {isLoading ? "Loading..." : "Login"}
                 </Button>
               </form>
             </Form>
           )}
-          {authMode === "otp" && (
+
+          {formType === "forgotPassword" && (
+            <Form {...forgotPasswordForm}>
+              <form
+                onSubmit={forgotPasswordForm.handleSubmit(
+                  onForgotPasswordSubmit
+                )}
+                className="space-y-4"
+              >
+                <FormField
+                  control={forgotPasswordForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder="Enter your email for password recovery"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Loading..." : "Send Recovery Email"}
+                </Button>
+              </form>
+            </Form>
+          )}
+
+          {formType === "resetPassword" && (
+            <Form {...resetPasswordForm}>
+              <form
+                onSubmit={resetPasswordForm.handleSubmit(onResetPasswordSubmit)}
+                className="space-y-4"
+              >
+                <FormField
+                  control={resetPasswordForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>New Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="password"
+                          placeholder="Enter your new password"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={resetPasswordForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm New Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="password"
+                          placeholder="Confirm your new password"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Loading..." : "Reset Password"}
+                </Button>
+              </form>
+            </Form>
+          )}
+
+          {formType === "otp" && (
             <Form {...otpForm}>
               <form
-                onSubmit={otpForm.handleSubmit(handleOTP)}
-                className="space-y-4 w-full"
+                onSubmit={otpForm.handleSubmit(onOtpSubmit)}
+                className="space-y-4"
               >
                 <FormField
                   control={otpForm.control}
-                  name="otp"
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Enter OTP</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <InputOTP maxLength={6} {...field}>
-                          <InputOTPGroup>
-                            <InputOTPSlot index={0} />
-                            <InputOTPSlot index={1} />
-                            <InputOTPSlot index={2} />
-                          </InputOTPGroup>
-                          <InputOTPSeparator />
-                          <InputOTPGroup>
-                            <InputOTPSlot index={3} />
-                            <InputOTPSlot index={4} />
-                            <InputOTPSlot index={5} />
-                          </InputOTPGroup>
-                        </InputOTP>
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder="Enter your email to receive OTP"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Loading..." : "Send OTP"}
+                </Button>
+              </form>
+            </Form>
+          )}
+
+          {formType === "otpVerification" && (
+            <Form {...otpVerificationForm}>
+              <form
+                onSubmit={otpVerificationForm.handleSubmit(
+                  onOtpVerificationSubmit
+                )}
+                className="space-y-4"
+              >
+                <FormField
+                  control={otpVerificationForm.control}
+                  name="otp"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col items-center gap-2">
+                      <FormLabel className="text-center">Enter OTP</FormLabel>
+                      <FormControl>
+                        <div className="flex justify-center">
+                          <InputOTP maxLength={6} {...field}>
+                            <InputOTPGroup>
+                              <InputOTPSlot index={0} />
+                              <InputOTPSlot index={1} />
+                              <InputOTPSlot index={2} />
+                            </InputOTPGroup>
+                            <InputOTPSeparator />
+                            <InputOTPGroup>
+                              <InputOTPSlot index={3} />
+                              <InputOTPSlot index={4} />
+                              <InputOTPSlot index={5} />
+                            </InputOTPGroup>
+                          </InputOTP>
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -492,10 +442,36 @@ const AuthPage: React.FC = () => {
               </form>
             </Form>
           )}
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-2">
+          {formType === "login" && (
+            <>
+              <Button
+                variant="link"
+                onClick={() => setFormType("forgotPassword")}
+              >
+                Forgot password?
+              </Button>
+              <Button variant="link" onClick={() => setFormType("otp")}>
+                Login with OTP
+              </Button>
+            </>
+          )}
+          {formType !== "login" && (
+            <Button variant="link" onClick={() => setFormType("login")}>
+              Back to login
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </motion.div>
   );
-};
+}
 
-export default AuthPage;
+export default function AuthPageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthPage />
+    </Suspense>
+  );
+}

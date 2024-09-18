@@ -1,7 +1,6 @@
 "use client";
 import Navbar from "@/components/navbar";
 import { createClient } from "@/utils/supabase/client";
-import type { Metadata } from "next";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";

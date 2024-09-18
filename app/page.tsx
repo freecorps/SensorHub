@@ -10,8 +10,8 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { ArrowRight, Share2, Shield, Activity } from "lucide-react";
-import { ThemeSwitch } from "@/components/theme-switch";
 import { useRouter } from "next/navigation";
+import Navbar from "@/components/navbar";
 
 export default function Home() {
   const router = useRouter();
@@ -21,37 +21,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
-      <nav className="container mx-auto p-6">
-        <div className="flex justify-between items-center">
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl font-bold text-foreground"
-          >
-            SensorHub
-          </motion.h1>
-          <div className="space-x-4 flex items-center">
-            <ThemeSwitch />
-            <Button
-              variant="ghost"
-              onClick={() => {
-                redirect("./auth");
-              }}
-            >
-              Login
-            </Button>
-            <Button
-              onClick={() => {
-                redirect("./auth");
-              }}
-            >
-              Sign Up
-            </Button>
-          </div>
-        </div>
-      </nav>
-
+      <Navbar />
       <main className="container mx-auto px-6 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

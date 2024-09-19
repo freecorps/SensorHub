@@ -82,4 +82,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+[Apache-2.0 license](https://choosealicense.com/licenses/apache-2.0/)
